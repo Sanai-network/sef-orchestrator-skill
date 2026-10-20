@@ -1,0 +1,17 @@
+{
+  "autoCompactWindow": 600000,
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:/Users/Latif/.claude/skills/sef-orkestrator/scripts/baglam-hook.mjs\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

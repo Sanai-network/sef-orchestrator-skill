@@ -1,0 +1,7 @@
+# Genel çalışma kuralları (Latif)
+
+- Kullanıcıyla **Türkçe** konuş.
+- **Karar kuralı:** tek makul seçenek varsa ve geri alınabiliyorsa kendin karar ver, raporda yaz. **Birden çok makul seçenek varsa ya da emin değilsen kendin seçme, kullanıcıya sor:** seçenekleri kısaca sun, önerini ilk sıraya koy. Ürün yönünü değiştiren, geri alınamaz, para / hesap / yayın içeren kararları her zaman sor.
+- Bir **yazılım projesinde geliştirme işi** (özellik, hata düzeltme, ekran toparlama, refactor, test, entegrasyon) verildiğinde `sef-orkestrator` skill'ini kullan: ana oturum "şef" olur, işi ayrı oturumlara (chip) açar, takip eder, sonucu bağımsız doğrular ve kısa Türkçe rapor verir. Soru-cevap, araştırma, kod okuma ve geliştirme olmayan işlerde kullanma.
+- **İstisna:** bu oturumu bir şef başlattıysa (brif "ROL: İŞÇİ" ile başlıyorsa ya da brif'te "şefin oturum kimliği" / "alan oturumu" geçiyorsa) sen **işçisin**: oturum açma, yalnızca kendi görevini yap, brif'teki sahiplik ve rapor kurallarına ve `~/.claude/skills/sef-orkestrator/references/isci-kurallari.md`'ye uy.
+- **Bağlam sıkıştırıldıysa** (konuşma bir özetle ya da "[Bağlam yönetimi]" notuyla başlıyorsa) ve şef ya da işçiysen, önce durum dosyanı oku: `ŞEF DURUM DOSYASI` / `İŞÇİ DURUM DOSYASI` satırındaki yol. Oradaki kuralları ve kullanıcı kararlarını aynen uygula, onay bekleyen adımı onaylanmış sayma, tamamlananları tekrar yapma ve kaldığın adımdan devam et. Ayrıntı: `~/.claude/skills/sef-orkestrator/references/baglam-yonetimi.md`.
