@@ -1,0 +1,15 @@
+{
+  "status": "ahead",
+  "ahead_by": 3,
+  "total_commits": 3,
+  "commits": [
+    { "sha": "1111111aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "commit": { "message": "Metin: çekirdek kurallar kısaldı" } },
+    { "sha": "2222222bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "commit": { "message": "Koruma: canlı kuralına railway eklendi" } },
+    { "sha": "3333333ccccccccccccccccccccccccccccccccc", "commit": { "message": "Oturum: önbellek süresi" } }
+  ],
+  "files": [
+    { "filename": "plugins/sef/shared/cekirdek.md" },
+    { "filename": "plugins/sef/hooks/koruma.mjs" },
+    { "filename": "plugins/sef/hooks/oturum.mjs" }
+  ]
+}
