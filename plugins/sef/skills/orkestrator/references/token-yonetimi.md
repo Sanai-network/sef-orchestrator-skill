@@ -1,53 +1,50 @@
 # Token yönetimi
 
-Hedef: iş başına toplam token'ı (şef + işçiler + tekrar turları) en düşük tutmak. En pahalı kalemler çıktı token'ı, gereğinden güçlü model ve gereksiz büyük bağlamdır. Bu maddeleri her işte uygula.
+Hedef: iş başına toplam token'ı (şef + işçiler + tekrar turları) en düşük tutmak. En pahalı kalemler uzun oturumların yeniden okunan bağlamı, gereğinden güçlü model ve çıktı token'ıdır.
 
 ## 1. İşçiye yalnız işinin bağlamını ver
-- `context: "fresh"` kullan; `fork` asla, çünkü bütün konuşmayı taşır. `background` ≥ 80 karakter olmalı ama kısa kalsın: projenin amacı ve bu parçanın yeri.
-- İşçi projenin `CLAUDE.md`'sini kendisi yükler; brif onu tekrar etmez. Ortak kurallar ve rapor biçimi de dosya yoluyla verilir (`isci-kurallari.md`), brif'e yazılmaz. Brif'e yalnız projeye özgü ve `CLAUDE.md`'de olmayan kurallar girer (hafızadan, 3–6 satır).
+- `context: "fresh"`; `fork` bütün konuşmayı taşır. `background` ≥ 80 karakter ama kısa: projenin amacı ve bu parçanın yeri.
+- İşçi projenin `CLAUDE.md`'sini kendisi yükler; brif onu tekrar etmez. Ortak kurallar ve rapor biçimi dosya yoluyla verilir. Brif'e yalnız projeye özgü ve `CLAUDE.md`'de olmayan kurallar girer (hafızadan, 3–6 satır).
 - Dosya içeriğini brif'e yapıştırma; yol ve satır aralığı ver (`apps/web/src/x.tsx:40-90`).
 - Bağımlı işe öncülün raporunu değil, ≤ 15 satırlık devir notunu ver.
 - Brif uzunluk hedefleri: basit ~15, orta ~35, karmaşık ≤ ~80 satır.
 
 ## 2. Tekrar eden bağlamı yeniden kullan
-- Aynı dosyalardaki takip işini bağlamı olan boştaki işçiye `SendMessage` ile gönder; dosyaları yeniden okumaz. İstem önbelleği (cache) yaklaşık bir saat sıcak kalır, bu yüzden takibi erken göndermek daha ucuzdur.
-- Birden çok işçiye gereken bilgiyi (ölçüt, API sözleşmesi, tasarım kararı) şef bir kez dosyaya yazar, brif'ler o dosyanın yolunu verir. **Mutlak yol ver:** worktree'deki işçi, ana klasördeki commit edilmemiş bir dosyayı ancak mutlak yolla görür.
-- Ortam bilgisini (adresler, portlar, test hesabı) ortam işçisinin raporundan bir kez al; sonraki brif'lere tek satır olarak geçir.
+- Aynı dosyalardaki takip işini bağlamı olan boştaki işçiye `SendMessage` ile gönder. İstem önbelleği yaklaşık bir saat sıcak kalır; takibi erken göndermek daha ucuzdur.
+- Birden çok işçiye gereken bilgiyi (ölçüt, sözleşme, tasarım kararı) şef bir kez dosyaya yazar, brif'ler yolunu verir. **Mutlak yol ver:** worktree'deki işçi ana klasördeki commit'lenmemiş dosyayı ancak mutlak yolla görür.
+- Ortam bilgisini (adresler, portlar, test hesabı) bir kez al; sonraki brif'lere tek satır geçir.
 
 ## 3. Şefin bağlam hijyeni
-- Geniş okuma yerine dar grep kullan. Geniş taramayı Haiku `Explore` alt ajanına ver; özet olarak döner.
-- Uzun çıktıyı bağlama dökme:
-  - test ve derleme çıktısında yalnız özeti ve son satırları oku (`| tail -n 30`, kısa raporlayıcı, `grep -E "fail|error"`);
-  - ekran görüntülerini birleştirip tek seferde bak;
-  - işçi raporunu `son-rapor.mjs` ile dosyadan al.
-- İşçi raporları kısadır (`isci-kurallari.md`: basit ve orta ≤ 25 satır, karmaşık ≤ 50 satır); uzun kanıtlar dosyada durur.
-- Aynı doğrulamayı her işçi için ayrı ayrı tekrarlama. İşçiye özel hedefli testi o işçi bitince çalıştır, bütün kapı komutlarını dalga sonunda bir kez çalıştır.
-- Bağlam dolarsa: `baglam-yonetimi.md`. Uyarıda durum dosyası yazılır, eşikte harness sıkıştırır, işçi boştayken yenilenir.
+- Geniş okuma yerine dar grep. Geniş taramayı Haiku `Explore` alt ajanına ver; özet döner.
+- Uzun çıktıyı bağlama dökme: test ve derleme çıktısında yalnız özeti ve sonu (`| tail -n 30`, `grep -E "fail|error"`); ekran görüntülerini birleştirip tek seferde bak; işçi raporunu `son-rapor.mjs` ile al.
+- Aynı doğrulamayı her işçi için tekrarlama: hedefli testi işçi bitince, bütün kapıları dalga sonunda bir kez.
+- Hızlı yol şefin bağlamını büyütür; bu yüzden bağlama duyarlıdır (SKILL.md §3).
+- Bağlam pahalılaşınca: `baglam-yonetimi.md`.
 
 ## 4. Uzun işçi oturumu en büyük kalemdir (ölçüldü)
-Her turda bütün bağlam yeniden okunur. Bu yüzden maliyet kabaca **mesaj sayısı × bağlam boyu** ile büyür ve çoğu önbellek okumasıdır. 2026-10-16'da mesai-sosyal'daki iki Opus işçisi 443 ve 276 mesaj sürdü: 246M ve 131M token önbellek okuması, ≈ $79 ve ≈ $50 (API karşılığı). Ne yapmalı:
-- İşi, bir işçinin ~100–150 mesajda bitireceği büyüklükte parçala. Zaman kutusu bunun için var.
-- Bunu aşan işçiden ara rapor ve devir notu al; kalanı taze bir oturuma ver. Taze oturum küçük bağlamla başlar.
+Her turda bütün bağlam yeniden okunur; maliyet kabaca **mesaj sayısı × bağlam boyu** ile büyür ve çoğu önbellek okumasıdır. Ölçülen bir örnekte iki Opus işçisi 443 ve 276 mesaj sürdü: 246M ve 131M token önbellek okuması, ≈ $79 ve ≈ $50 (API karşılığı). Ne yapmalı:
+- İşi bir işçinin ~100–150 mesajda bitireceği büyüklükte parçala. Zaman kutusu bunun için var.
+- Bunu aşan işçiden ara rapor ve devir notu al; kalanı taze bir oturuma ver.
 - İşçiye dev dosyaları baştan sona okutma; satır aralığıyla okusun.
 - Ucuz model uzun oturumda da ucuzdur: aynı 246M önbellek okuması Haiku'da ≈ $2.5 tutar.
 
 ## 5. Gereksiz çalıştırmayı önle
 - Oturum sayısı ayrık dosya kümesi sayısı kadardır; boşuna bölme.
-- Her brif'te zaman kutusu olsun. Uzun tarama (tam matris) yalnız dalga sonunda çalışır, günlük işte hızlı matris yeter.
+- Her brif'te zaman kutusu ve bekçi. Uzun tarama (tam matris) yalnız dalga sonunda.
 - Deneme ve test çalıştırmalarını (alt ajan dahil) küçük ve süre sınırlı tut.
 - Sınıf yanlış seçildiyse erken düzelt (`siniflandirma-ve-model.md` §6).
-- Doğrulanan işçiyi arşivle; boşta bekleyen oturum kenar çubuğunu ve bağlı oturum listesini şişirir.
+- Doğrulanan işçiyi profile göre arşivle; boşta bekleyen oturum listeyi şişirir.
 
 ## 6. Ölçüm
-Her iş ağı bittiğinde şu komutu çalıştır:
+Her iş ağı bittiğinde:
 ```
-node ~/.claude/skills/sef-orkestrator/scripts/maliyet.mjs --bul <kimlik1> --bul <kimlik2> --sef
+node "<eklenti kökü>/scripts/maliyet.mjs" --bul <kimlik1> --bul <kimlik2> --sef
 ```
-Komut işçi başına modeli, mesaj sayısını, girdi / önbellek / çıktı token'ını ve tahmini $'ı verir. Fiyatlar API fiyatıdır; abonelikte kota karşılığı olarak oku. `--sef` şefin kendi transkriptini de ekler.
-- Final rapora tek satır yaz: "Maliyet: 4 işçi (2 Haiku, 1 Sonnet, 1 Opus) ≈ $1.80; şef ≈ $2.10."
-- Sonuçtan ders çıkar: hangi sınıf beklenenden pahalı çıktı, hangi brif tekrar turu doğurdu? Dersi proje hafızasına kısaca yaz.
+İşçi başına model, mesaj sayısı, girdi / önbellek / çıktı token'ı ve tahmini $ verir. Fiyatlar API fiyatıdır; abonelikte kota karşılığı olarak oku. `--sef` şefin kendi transkriptini ekler.
+- Final rapora tek satır: "Maliyet: 4 işçi (2 Haiku, 1 Sonnet, 1 Opus) ≈ $1.80; şef ≈ $2.10."
+- Ders çıkar: hangi sınıf beklenenden pahalı çıktı, hangi brif tekrar turu doğurdu? Kısaca proje hafızasına yaz.
 
-Fiyatlar (1M token, 2026-10; betiğin içindeki tabloyu güncel tut):
+Fiyatlar (1M token, 2026-10; betiğin içindeki tablo esastır):
 
 | Model | Girdi | Çıktı | Önbellek okuma |
 |---|---|---|---|

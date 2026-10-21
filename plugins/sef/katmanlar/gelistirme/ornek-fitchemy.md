@@ -2,7 +2,7 @@
 
 Kalibrasyon için gerçek bir çalışma. Bu bir şablon değil; boyut ve ritim hissi vermek için.
 
-Not: Bu çalışmada şef ortamı ve bir tip hatası düzeltmesini kendisi yaptı; işçilerin hepsi de şefin modeliyle çalıştı. Bugünkü kurala göre ortam, ortam işçisine; düzeltme, dosyanın sahibine gider; her işçi de sınıfına uygun modelle çalışır (`siniflandirma-ve-model.md`).
+> Not: Çalışma Windows + Android emülatöründe, git'siz projede (`git-akisi.md` → "Git'siz proje") ve eski "her iş ayrı oturum" kuralıyla yapıldı. Şef bir tip hatasını kendisi düzeltti ve bütün işçiler şefin modeliyle çalıştı. Bugünkü kurala göre küçük iş bağlama duyarlı hızlı yoldan gider, düzeltme dosyanın sahibine gider, her işçi sınıfına uygun modelle çalışır (`skills/orkestrator/references/siniflandirma-ve-model.md`) ve zaman kutusuna bekçi kurulur (`skills/orkestrator/references/oturum-araclari.md`).
 
 ## İstek
 Fitness uygulaması (Expo / TypeScript / Expo Router, git yok). Kullanıcı: "Ücretsizken sade, eksiksiz spor takibi; Premium'da detay + AI. Bazı ekranlar hâlâ karmaşık ve dağınık: toparla, responsive yap. Font ekle (yoksa), UI testi yap."
@@ -32,7 +32,7 @@ Ortak dokümanları (`docs/DESIGN-FIXES.md`, `AGENT-GUIDE.md` tablosu) yalnız �
 
 ## Neler yavaşlattı / dersler
 - UI test oturumu **zaman kutusu olmadan** 2 saatten fazla sürdü (kural cilası); tam matris 1750 yapılandırma, 85 dk. → Zaman kutusu koy, hızlı ve tam matrisi ayır.
-- Boştaki oturuma bildirim aboneliği hemen tetiklendi → abonelik yalnız oturum meşgulken.
+- Boştaki oturuma bildirim aboneliği hemen tetiklendi → abonelik yalnız oturum meşgulken (`notify_when_idle` yalnız CLI'de; Desktop'ta bkz. `oturum-araclari.md` §3).
 - Bir oturum başka bir projenin oturumunu şaşırttı (ortak emülatörü kullanma) → kullanılan ortamı o projenin şefine kısa bilgiyle bildir.
 - Web önizlemede "kesilmiş metin" uyarıları çoğunlukla web'e özgüydü (`adjustsFontSizeToFit`); native'de bakmadan düzeltme istemek yanlış olurdu.
 - `.qa/` çıktısı 100 MB'a ulaştı → bitişte temizlemeyi öner.

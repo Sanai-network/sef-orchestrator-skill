@@ -12,6 +12,7 @@ Bir parçayı değiştiren, buradaki sözleşmeyi bozuyorsa önce bu dosyayı g�
 | Proje izin dosyası | `<proje>/.claude/sef.local.json` | yalnız kullanıcı |
 | Koruma log'u | `~/.claude/sef/koruma.log` (`SEF_LOG` ile değişir; 5 MB'ta `.1`'e döner) | koruma hook'u |
 | Durum klasörü | `~/.claude/sef/durum/` (şef / işçi durum dosyaları, `gunluk.jsonl`) | şef, işçi, betikler |
+| Durum dosyası işareti | asistan mesajında satır başında `ŞEF DURUM DOSYASI: <yol>.md` ya da `İŞÇİ DURUM DOSYASI: <yol>.md`; oturum hook'u geri yüklemede bunu arar | şef, işçi |
 | Oturum hook'unun önbelleği | `~/.claude/sef/durum/guncelleme.json` | oturum hook'u |
 
 Eklenti klasörüne çalışma anında hiçbir şey yazılmaz; güncelleme onu siler.
@@ -77,7 +78,7 @@ Koruma ve oturum hook'u aynı kuralı uygular; ikisi de transkripti (`transcript
 | `ana-dal-push` | `main` / `master`'a push, `gh pr merge` | şef + işçi | evet |
 | `canli` | bilinen deploy ve yayın komutları, adı deploy olan paket betikleri, `launchctl` (okuma alt komutları hariç) | şef + işçi | evet |
 | `ev-silme` | ev dizinini ya da `~/.claude`'u silen `rm -r` | şef + işçi | hayır |
-| `ayar-yazma` | `~/.claude/settings*.json` ve herhangi bir `CLAUDE.md`'ye yazma | işçi | hayır |
+| `ayar-yazma` | `~/.claude/settings*.json`, projedeki `.claude/settings*.json` ve herhangi bir `CLAUDE.md`'ye yazma | işçi | hayır |
 | `sef-dosyasi` | profil ve proje izin dosyasına yazma | şef + işçi | hayır |
 | `isci-commit` | `git commit` (yalnız profilde `"git": "commit-yok"`) | işçi | hayır |
 
@@ -102,4 +103,4 @@ Mesaj işçiye "soruyu şefe yaz" ya da "şefe engel olarak bildir"; şefe "kull
 
 ## 7. Testler
 
-`node --test plugins/sef/test/` tek komuttur ve ağ gerektirmez. Betik ve hook'lar ayrıca `--selftest` taşıyabilir; o zaman `test/` altında onu koşan bir test dosyası bulunur. Test verisi `plugins/sef/test/veri/` altındadır.
+`node --test "plugins/sef/test/*.test.mjs"` tek komuttur ve ağ gerektirmez (tırnaklı glob; Node 24 klasör yolunu kabul etmez). Test dosyaları `*.test.mjs` adını taşır. Betik ve hook'lar ayrıca `--selftest` taşıyabilir; o zaman `test/` altında onu koşan bir test dosyası bulunur. Test verisi `plugins/sef/test/veri/` altındadır.
