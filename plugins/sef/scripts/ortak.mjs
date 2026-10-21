@@ -1,12 +1,16 @@
 /**
- * son-rapor.mjs ve maliyet.mjs'nin ortak yardımcıları.
+ * son-rapor.mjs, maliyet.mjs ve baglam.mjs'nin ortak yardımcıları (oturum hook'u da ayar / ölçüm işlevlerini kullanır).
  * Transkriptler ~/.claude/projects/<klasör>/<oturum>.jsonl altında durur. Worktree'de çalışan işçinin klasörü
  * ana projeninkinden farklıdır (<proje>--claude-worktrees-<ad>), bu yüzden arama ana proje + tüm worktree
- * klasörlerini kapsar.
+ * klasörlerini kapsar. Kişisel tercihler ~/.claude/sef/profil.json'dadır (bkz. profil.mjs); oranlar ve sınırlar burada sabittir.
  */
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { StringDecoder } from 'node:string_decoder';
+import { profilOku } from './profil.mjs';
+
+export class KullanimHatasi extends Error {}
 
 export const args = process.argv.slice(2);
 export const opt = (name, def) => {
@@ -17,18 +21,173 @@ export const opt = (name, def) => {
 export const optAll = (name) =>
   args.flatMap((a, i) => (a === `--${name}` && args[i + 1] ? args[i + 1].split(',') : [])).filter(Boolean);
 
-export const BASE = path.join(os.homedir(), '.claude', 'projects');
+const dizinMi = (p) => {
+  try {
+    return fs.statSync(p).isDirectory();
+  } catch {
+    return false;
+  }
+};
+
+/** Transkript kökü: $CLAUDE_CONFIG_DIR/projects varsa o, yoksa ~/.claude/projects. */
+const cfg = process.env.CLAUDE_CONFIG_DIR;
+export const BASE = cfg && dizinMi(path.join(cfg, 'projects')) ? path.join(cfg, 'projects') : path.join(os.homedir(), '.claude', 'projects');
 const WT = '--claude-worktrees-';
-export const encode = (p) => p.replace(/[:\\/ .]/g, '-');
+export const AD_SINIRI = 200; // Claude Code klasör adını bu uzunlukta kırpar, sonuna '-<özet>' ekler.
+const IS_WIN = process.platform === 'win32';
+const adEsit = (a, b) => (IS_WIN ? a.toLowerCase() === b.toLowerCase() : a === b);
+const onekMi = (s, on) => (IS_WIN ? s.toLowerCase().startsWith(on.toLowerCase()) : s.startsWith(on));
+
+/** Claude Code'un klasör adı kodlaması: harf ve rakam dışındaki her karakter '-' olur. */
+export const encode = (p) => String(p).replace(/[^a-zA-Z0-9]/g, '-');
+const eskiEncode = (p) => String(p).replace(/[:\\/ ]/g, '-'); // eski sürümler '.' karakterini kodlamamış olabilir
+
+export const textOf = (content) =>
+  typeof content === 'string'
+    ? content
+    : Array.isArray(content)
+      ? content.map((c) => (c && c.type === 'text' && typeof c.text === 'string' ? c.text : '')).filter(Boolean).join('\n')
+      : '';
+
+export function klasorler(kok = BASE) {
+  try {
+    return fs.readdirSync(kok, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name);
+  } catch {
+    return [];
+  }
+}
+
+/** Klasör(ler)deki .jsonl dosyaları, en son değişen önce. */
+export function listing(dirs) {
+  return [dirs]
+    .flat()
+    .flatMap((dir) => {
+      let ad;
+      try {
+        ad = fs.readdirSync(dir);
+      } catch {
+        return [];
+      }
+      return ad
+        .filter((f) => f.endsWith('.jsonl'))
+        .map((f) => {
+          const file = path.join(dir, f);
+          try {
+            return { file, mtime: fs.statSync(file).mtimeMs };
+          } catch {
+            return null;
+          }
+        })
+        .filter(Boolean);
+    })
+    .sort((a, b) => b.mtime - a.mtime);
+}
+
+/** Dosyanın ilk `sinir` dolu satırı; dosya parça parça okunur (büyük transkriptte baştan okumak yeter). */
+export function* ilkSatirlar(file, sinir = 400) {
+  const fd = fs.openSync(file, 'r');
+  try {
+    const dec = new StringDecoder('utf8');
+    const buf = Buffer.alloc(65536);
+    let kalan = '';
+    let n = 0;
+    for (;;) {
+      const r = fs.readSync(fd, buf, 0, buf.length, null);
+      const bitti = r === 0;
+      const parcalar = (kalan + (bitti ? dec.end() : dec.write(buf.subarray(0, r)))).split('\n');
+      kalan = bitti ? '' : parcalar.pop();
+      for (const p of parcalar) {
+        if (!p) continue;
+        if (++n > sinir) return;
+        yield p;
+      }
+      if (bitti) return;
+    }
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
+/** Klasördeki transkriptlerin ilk cwd alanı (kırpılmış uzun klasör adlarını çözmek için). */
+export function ilkCwd(dir) {
+  for (const f of listing(dir).slice(0, 3))
+    for (const l of ilkSatirlar(f.file, 50)) {
+      try {
+        const j = JSON.parse(l);
+        if (typeof j.cwd === 'string') return j.cwd;
+      } catch {
+        /* yarım satır */
+      }
+    }
+  return null;
+}
+
+/** Bir cwd'nin kök altındaki klasör adı (yoksa null). */
+export function cwdKlasoru(cwd, kok = BASE, mevcut = klasorler(kok)) {
+  const ad = encode(cwd);
+  if (ad.length <= AD_SINIRI) return mevcut.find((d) => adEsit(d, ad) || adEsit(d, eskiEncode(cwd))) ?? null;
+  const on = ad.slice(0, AD_SINIRI) + '-';
+  for (const d of mevcut.filter((d) => onekMi(d, on))) {
+    const c = ilkCwd(path.join(kok, d));
+    if (c && adEsit(c, cwd)) return d;
+  }
+  return null;
+}
+
+/** Worktree kardeşleri: <kodlanmış-cwd>--claude-worktrees-* */
+export function worktreeKardesleri(cwd, kok = BASE, mevcut = klasorler(kok)) {
+  const on = encode(cwd) + WT;
+  if (on.length < AD_SINIRI) return mevcut.filter((d) => onekMi(d, on));
+  const wtKok = path.join(cwd, '.claude', 'worktrees') + path.sep;
+  return mevcut.filter((d) => {
+    if (!onekMi(d, on.slice(0, AD_SINIRI))) return false;
+    const c = ilkCwd(path.join(kok, d));
+    return c && onekMi(c, wtKok);
+  });
+}
+
+const yolMu = (v) => /[\\/]/.test(v) || /^[A-Za-z]:/.test(v) || v.startsWith('~') || v === '.' || v === '..';
+
+export function benzerler(mevcut, ad) {
+  const son = String(ad).split(/[-\\/]/).filter(Boolean).pop()?.toLowerCase() ?? '';
+  const b = son ? mevcut.filter((d) => d.toLowerCase().includes(son)).slice(0, 8) : [];
+  return b.length ? `\nBenzerler: ${b.join(', ')}` : '';
+}
+
+/** --proje (klasör adı ya da yol) ya da çağıranın cwd'si → { cwd|null, klasor|null, aday }. Hatada KullanimHatasi. */
+export function projeCoz(kok = BASE, proje = null) {
+  const mevcut = klasorler(kok);
+  if (proje && !yolMu(proje)) {
+    const k = mevcut.find((d) => adEsit(d, proje));
+    if (!k) throw new KullanimHatasi(`Proje klasörü yok: ${path.join(kok, proje)}${benzerler(mevcut, proje)}`);
+    return { cwd: null, klasor: k, aday: proje };
+  }
+  const p = proje ? path.resolve(expandHome(proje)) : process.cwd();
+  if (proje && path.dirname(p) === kok && mevcut.some((d) => adEsit(d, path.basename(p)))) return { cwd: null, klasor: path.basename(p), aday: path.basename(p) };
+  const adaylar = [p];
+  try {
+    const r = fs.realpathSync(p);
+    if (r !== p) adaylar.push(r);
+  } catch {
+    /* yol yok */
+  }
+  for (const c of adaylar) {
+    const k = cwdKlasoru(c, kok, mevcut);
+    if (k) return { cwd: c, klasor: k, aday: encode(c) };
+  }
+  if (proje && !fs.existsSync(p)) throw new KullanimHatasi(`--proje yolu yok ve kökte karşılığı bulunamadı: ${p}`);
+  const son = adaylar[adaylar.length - 1];
+  return { cwd: son, klasor: null, aday: encode(son) };
+}
 
 /** Geçerli klasörün (ya da --proje'nin) transkript klasörü; bulunamazsa null. */
 export function tryProjectDir() {
-  const guess = opt('proje', null) ?? encode(process.cwd());
-  const dir = path.join(BASE, guess);
-  if (fs.existsSync(dir)) return dir;
-  // Eski sürümler '.' karakterini kodlamamış olabilir.
-  const alt = path.join(BASE, process.cwd().replace(/[:\\/ ]/g, '-'));
-  return fs.existsSync(alt) ? alt : null;
+  try {
+    const p = projeCoz(BASE, opt('proje', null));
+    return p.klasor ? path.join(BASE, p.klasor) : null;
+  } catch {
+    return null;
+  }
 }
 
 /** tryProjectDir gibi, ama bulunamazsa yakın adları önererek çıkar. */
@@ -37,24 +196,29 @@ export function projectDir() {
   if (found) return found;
   const dir = path.join(BASE, opt('proje', null) ?? encode(process.cwd()));
   const last = process.cwd().split(/[\\/]/).pop();
-  const near = fs.existsSync(BASE) ? fs.readdirSync(BASE).filter((d) => d.toLowerCase().includes(String(last).toLowerCase())) : [];
-  console.error(`Proje klasörü bulunamadı: ${dir}${near.length ? `\nBenzerler: ${near.join(', ')}` : ''}\n--proje <klasör adı> ver.`);
+  console.error(`Proje klasörü bulunamadı: ${dir}${benzerler(klasorler(), last)}\n--proje <klasör adı> ver.`);
   process.exit(2);
 }
 
 /** Ana proje klasörü + onun tüm worktree klasörleri (şef worktree içindeyse ana projeye çıkılır). */
 export function projectFamilyDirs() {
-  const found = tryProjectDir();
-  if (!found) {
-    console.error('Not: geçerli klasör bir proje değil; tüm projelerin transkriptleri aranıyor (--proje ile daralt).');
-    return fs.readdirSync(BASE).map((d) => path.join(BASE, d)).filter((d) => fs.statSync(d).isDirectory());
+  let p = null;
+  try {
+    p = projeCoz(BASE, opt('proje', null));
+  } catch {
+    /* aşağıda tüm projelere düşülür */
   }
-  const own = path.basename(found);
+  if (!p?.klasor) {
+    console.error('Not: geçerli klasör bir proje değil; tüm projelerin transkriptleri aranıyor (--proje ile daralt).');
+    return klasorler().map((d) => path.join(BASE, d));
+  }
+  const own = p.klasor;
   const root = own.includes(WT) ? own.slice(0, own.indexOf(WT)) : own;
-  return fs
-    .readdirSync(BASE)
-    .filter((d) => d === root || d.startsWith(root + WT))
-    .map((d) => path.join(BASE, d));
+  const mevcut = klasorler();
+  const aile = new Set(mevcut.filter((d) => d === root || d.startsWith(root + WT)));
+  aile.add(own);
+  if (p.cwd) for (const d of worktreeKardesleri(p.cwd, BASE, mevcut)) aile.add(d);
+  return [...aile].map((d) => path.join(BASE, d));
 }
 
 export function head(file, bytes = 300_000) {
@@ -65,34 +229,21 @@ export function head(file, bytes = 300_000) {
   return buf.toString('utf8');
 }
 
-export const textOf = (content) =>
-  typeof content === 'string' ? content : (content ?? []).map((c) => (c && c.type === 'text' ? c.text : '')).join('\n');
-
-/** Klasör(ler)deki .jsonl dosyaları, en son değişen önce. */
-export function listing(dirs) {
-  return [dirs]
-    .flat()
-    .flatMap((dir) =>
-      fs
-        .readdirSync(dir)
-        .filter((f) => f.endsWith('.jsonl'))
-        .map((f) => ({ file: path.join(dir, f), mtime: fs.statSync(path.join(dir, f)).mtimeMs })),
-    )
-    .sort((a, b) => b.mtime - a.mtime);
-}
-
-/** Transkriptin ilk gerçek kullanıcı mesajı: işçide bu, background + brif'tir. */
+/**
+ * Transkriptin ilk gerçek kullanıcı mesajı: işçide bu, background + brif'tir. <system-reminder> blokları atılır;
+ * meta, yan zincir, sıkıştırma özeti ve '<' ile başlayan (komut, hatırlatma) mesajlar atlanır. Yoksa ''.
+ */
 export function firstUserText(file) {
-  for (const line of head(file).split('\n')) {
+  for (const l of ilkSatirlar(file, 400)) {
     let j;
     try {
-      j = JSON.parse(line);
+      j = JSON.parse(l);
     } catch {
       continue;
     }
-    if (j.type !== 'user') continue;
-    const t = textOf(j.message?.content).trim();
-    if (t) return t;
+    if (j.type !== 'user' || j.isMeta || j.isSidechain || j.isCompactSummary) continue;
+    const t = textOf(j.message?.content).replace(/<system-reminder>[\s\S]*?<\/system-reminder>/g, '').trim();
+    if (t && !t.startsWith('<')) return t;
   }
   return '';
 }
@@ -118,7 +269,6 @@ export function findByText(needle) {
 
 export const HOME = os.homedir();
 export const expandHome = (p) => (p && p.startsWith('~') ? path.join(HOME, p.slice(1)) : p);
-const SKILL_DIR = path.join(HOME, '.claude', 'skills', 'sef-orkestrator');
 const VARSAYILAN_PENCERE = 1_000_000;
 const VARSAYILAN_ORAN = 0.97; // harness'ın ayarsız davranışı (get_usage: autoCompactsAtPercent 97)
 
@@ -130,18 +280,25 @@ const readJson = (f) => {
   }
 };
 
-/** Skill parametreleri (baglam.json) + harness eşiği (settings.json). */
+// Oranlar ve sınırlar kodda sabittir; kullanıcıya açık tek bağlam tercihi profildeki baglamUyari'dır.
+const SABIT = {
+  uyariOrani: 0.8, // eski alan: seviye() artık profildeki mutlak baglamUyari'yı kullanır; hook uyumu için duruyor
+  donguPencereDakika: 15,
+  donguSikistirmaSayisi: 2,
+  isciYenilemeSiniri: 2,
+  hookBrifSiniri: 8000,
+  hookDurumSiniri: 12000,
+};
+
+/** Sabit sınırlar + profil (baglamUyari) + harness eşiği (settings.json; yalnız okunur). */
 export function ayar() {
-  const b = readJson(path.join(SKILL_DIR, 'baglam.json'));
   const s = readJson(path.join(HOME, '.claude', 'settings.json'));
+  const { profil, uyarilar } = profilOku();
   return {
-    uyariOrani: b.uyariOrani ?? 0.8,
-    donguPencereDakika: b.donguPencereDakika ?? 15,
-    donguSikistirmaSayisi: b.donguSikistirmaSayisi ?? 2,
-    isciYenilemeSiniri: b.isciYenilemeSiniri ?? 2,
-    durumKlasoru: expandHome(b.durumKlasoru ?? '~/.claude/sef-durum'),
-    hookBrifSiniri: b.hookBrifSiniri ?? 8000,
-    hookDurumSiniri: b.hookDurumSiniri ?? 12000,
+    ...SABIT,
+    baglamUyari: profil.baglamUyari,
+    profilUyarilari: uyarilar,
+    durumKlasoru: expandHome('~/.claude/sef/durum'),
     pencere: s.autoCompactWindow,
     modelPencere: Object.fromEntries(Object.entries(s.modelSettings ?? {}).map(([m, v]) => [m, v?.autoCompactWindow]).filter(([, v]) => v)),
   };
@@ -180,10 +337,10 @@ export function olc(file) {
   return { boy: last?.boy ?? 0, zaman: last?.zaman ?? null, model, sikistirmalar };
 }
 
-/** Seviye: ok / UYARI / ESIK. */
+/** Seviye: ok / UYARI (≥ profildeki baglamUyari) / ESIK (≥ sıkıştırma eşiği). */
 export function seviye(boy, model, a = ayar()) {
   const { esik, kaynak } = esikFor(model, a);
-  const uyari = Math.round(esik * a.uyariOrani);
+  const uyari = a.baglamUyari;
   return { seviye: boy >= esik ? 'ESIK' : boy >= uyari ? 'UYARI' : 'ok', esik, uyari, kaynak };
 }
 

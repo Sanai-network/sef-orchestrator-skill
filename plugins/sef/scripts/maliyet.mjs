@@ -106,5 +106,5 @@ for (const r of rows)
     k(r.output),
     r.usd.toFixed(2) + (r.unpriced ? '*' : ''),
   ]);
-line(['TOPLAM', '', total.msgs, k(total.input), k(total.cw), k(total.cr), k(total.output), total.usd.toFixed(2)]);
+line(['TOPLAM', '', total.msgs, k(total.input), k(total.cw), k(total.cr), k(total.output), total.usd.toFixed(2) + (rows.some((r) => r.unpriced) ? '*' : '')]);
 console.log('\nAPI fiyatıyla tahmini $ (önbellek yazma 5 dk=1.25×, 1 sa=2× girdi). * = fiyatı bilinmeyen modelli mesaj var.');

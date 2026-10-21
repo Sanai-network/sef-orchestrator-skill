@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 /**
- * Bağlam izleme (şef kullanır). Eşik ~/.claude/settings.json'daki autoCompactWindow'dan, oranlar baglam.json'dan okunur.
+ * Bağlam izleme (şef kullanır). Sıkıştırma eşiği ~/.claude/settings.json'daki autoCompactWindow'dan (yalnız okunur),
+ * uyarı eşiği profildeki mutlak baglamUyari'dan (~/.claude/sef/profil.json; varsayılan 400000 token) okunur.
+ * Seviye: bağlam ≥ sıkıştırma eşiği → ESIK · ≥ baglamUyari → UYARI · değilse ok.
  *
  *   node baglam.mjs ayar
- *       Geçerli eşikleri ve kaynaklarını yazar (model başına), uyarı oranını ve döngü ayarlarını.
+ *       Geçerli eşikleri ve kaynaklarını yazar (model başına), baglamUyari'yı ve döngü ayarlarını.
  *   node baglam.mjs durum [--sef] [--bul <brif-kimliği>[,<kimlik2>]] [dosya.jsonl ...]
  *       Her oturum için son API çağrısındaki bağlam boyu, seviye (ok / UYARI / ESIK), sıkıştırma sayısı,
  *       son sıkıştırmanın öncesi / sonrası ve döngü durumu. --sef: geçerli klasörün en son transkripti (şefin kendisi).
  *       Çıkış kodu: 0 hepsi ok · 10 en az bir UYARI · 20 en az bir ESIK ya da döngü.
+ *   node baglam.mjs --help   Bu yardım.
  *   node baglam.mjs brif --bul <brif-kimliği>
  *       İşçinin orijinal brif'ini (ilk kullanıcı mesajı) yazar; işçi yenilemesinde yeniden göndermek için.
  *   node baglam.mjs kaydet --olay <yenileme|uyari|dongu|not> --oturum <ad> [--bag <token>] [--neden "<metin>"]
@@ -22,15 +25,31 @@ import { args, opt, optAll, projectDir, listing, findByText, firstUserText, ayar
 const k = (n) => (n == null ? '-' : n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : n >= 1e3 ? Math.round(n / 1e3) + 'K' : String(n));
 const saat = (t) => (t ? new Date(t).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) : '-');
 const a = ayar();
+for (const u of a.profilUyarilari) console.error(`Uyarı: ${u}`);
 const komut = args[0];
 
-if (komut === 'ayar') {
-  console.log(`uyarı oranı: ${a.uyariOrani}  ·  döngü: ${a.donguPencereDakika} dk içinde ≥ ${a.donguSikistirmaSayisi} sıkıştırma  ·  işçi yenileme sınırı: ${a.isciYenilemeSiniri}`);
+const YARDIM = `Bağlam izleme. Uyarı eşiği profildeki baglamUyari (varsayılan 400000 token), ESIK sıkıştırma eşiğidir.
+Kullanım:
+  node baglam.mjs ayar
+  node baglam.mjs durum [--sef] [--bul <kimlik>[,<kimlik2>]] [dosya.jsonl ...]   (çıkış: 0 ok · 10 UYARI · 20 ESIK ya da döngü)
+  node baglam.mjs brif --bul <kimlik>
+  node baglam.mjs kaydet --olay <yenileme|uyari|dongu|not> --oturum <ad> [--bag <token>] [--neden "<metin>"]
+  node baglam.mjs gunluk [--son N]
+  node baglam.mjs --help`;
+
+if (!komut || ['--help', '-h', 'help', 'yardim', '--yardim'].includes(komut)) {
+  console.log(YARDIM);
+  process.exit(komut ? 0 : 1);
+} else if (komut === 'ayar') {
+  console.log(`uyarı eşiği (profil baglamUyari): ${k(a.baglamUyari)}  ·  döngü: ${a.donguPencereDakika} dk içinde ≥ ${a.donguSikistirmaSayisi} sıkıştırma  ·  işçi yenileme sınırı: ${a.isciYenilemeSiniri}`);
   console.log(`durum klasörü: ${a.durumKlasoru}`);
+  const uyarisizlar = [];
   for (const m of ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-haiku-5-5', 'claude-fable-5-1']) {
     const { esik, kaynak } = esikFor(m, a);
-    console.log(`${m.padEnd(18)} eşik ${k(esik).padStart(5)}  uyarı ${k(Math.round(esik * a.uyariOrani)).padStart(5)}  (${kaynak})`);
+    console.log(`${m.padEnd(18)} eşik ${k(esik).padStart(5)}  uyarı ${k(a.baglamUyari).padStart(5)}  (${kaynak})`);
+    if (a.baglamUyari >= esik) uyarisizlar.push(m);
   }
+  if (uyarisizlar.length) console.log(`Not: baglamUyari sıkıştırma eşiğinden küçük değil (${uyarisizlar.join(', ')}); bu modellerde UYARI hiç görülmez, doğrudan ESIK olur.`);
 } else if (komut === 'durum') {
   const hedef = [];
   for (const id of optAll('bul')) {
@@ -56,7 +75,7 @@ if (komut === 'ayar') {
     const d = donguVarMi(o.sikistirmalar, a);
     const son = o.sikistirmalar.at(-1);
     // Sıkıştırma etkisizse (sonrası hemen uyarı seviyesinde) bu da döngü sayılır.
-    const etkisiz = son && son.sonrasi != null && son.sonrasi >= s.uyari;
+    const etkisiz = son && son.sonrasi != null && son.sonrasi >= Math.min(s.uyari, s.esik);
     const dongu = d.dongu || etkisiz;
     kod = Math.max(kod, s.seviye === 'ESIK' || dongu ? 20 : s.seviye === 'UYARI' ? 10 : 0);
     console.log(
@@ -102,6 +121,6 @@ if (komut === 'ayar') {
     }
   }
 } else {
-  console.error('Kullanım: node baglam.mjs ayar | durum ... | kaydet ... | gunluk [--son N]');
+  console.error('Kullanım: node baglam.mjs ayar | durum ... | brif ... | kaydet ... | gunluk [--son N] | --help');
   process.exit(1);
 }
