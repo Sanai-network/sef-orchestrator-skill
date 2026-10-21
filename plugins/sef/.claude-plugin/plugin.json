@@ -1,0 +1,5 @@
+{
+  "name": "sef",
+  "description": "Şef yöntemi (/sef:orkestrator): işi sınıflandırır, uygun modelle işçi oturumlarına dağıtır, bağımsız doğrular. Koruma hook'u şef ve işçi oturumlarında kısa bir engel listesi uygular; oturum hook'u güncellemeyi bildirir ve sıkıştırmadan sonra durumu geri yükler.",
+  "author": { "name": "Sanai-network" }
+}
