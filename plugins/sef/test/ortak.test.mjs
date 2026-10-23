@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { encode, textOf, firstUserText, ilkSatirlar, esikFor, donguVarMi, ayar, expandHome, lines, olc } from '../scripts/ortak.mjs';
+import { encode, projeCoz, textOf, firstUserText, ilkSatirlar, esikFor, donguVarMi, ayar, expandHome, lines, olc } from '../scripts/ortak.mjs';
 
 const gecici = fs.mkdtempSync(path.join(os.tmpdir(), 'sef-ortak-test-'));
 test.after(() => fs.rmSync(gecici, { recursive: true, force: true }));
@@ -65,4 +65,18 @@ test('donguVarMi ve olc', () => {
   ]);
   assert.equal(olc(f).boy, 15);
   assert.equal([...lines(f)].length, 2);
+});
+
+test('projeCoz: alt klasörden çalışınca üstteki projenin transkript klasörünü bulur, ev dizininde durur', () => {
+  const kok = path.join(gecici, 'projects');
+  const proje = fs.realpathSync(fs.mkdtempSync(path.join(gecici, 'proje-')));
+  const alt = path.join(proje, 'apps', 'mobile');
+  fs.mkdirSync(alt, { recursive: true });
+  fs.mkdirSync(path.join(kok, encode(proje)), { recursive: true });
+  const p = projeCoz(kok, alt);
+  assert.equal(p.klasor, encode(proje));
+  assert.equal(p.cwd, proje);
+  // Eşleşen üst klasör yoksa proje bulunmaz (tüm projelere düşülür)
+  const yabanci = fs.mkdtempSync(path.join(gecici, 'yabanci-'));
+  assert.equal(projeCoz(kok, yabanci).klasor, null);
 });

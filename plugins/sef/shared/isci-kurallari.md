@@ -25,6 +25,7 @@ Sen bir şefin işçi oturumusun. Önce aynı klasördeki `cekirdek.md`'yi oku. 
 - İstenen davranışı en az kodla kur. Yeni soyutlama, yapılandırma ya da "ileride lazım olur" özelliği ekleme; projenin kalıbını kullan. Kendi yeni kodun gereğinden uzunsa raporlamadan önce sadeleştir.
 - Sistem sınırlarında (girdi, ağ, dosya, dış API, yetki) doğrulamayı atlama. Kritik işte güvenlik ve veri kontrolleri sadelik gerekçesiyle kaldırılmaz.
 - Yalnız gereken satırlara dokun; komşu kodu, yorumu, biçimi iyileştirme. Proje kuralı yoksa mevcut stile uy.
+- Dosyaları `Edit` / `Write` araçlarıyla yaz; Bash'te heredoc, `python`, `sed -i` ya da yönlendirmeyle dosya yazma. Koruma hook'u yalnız araçla yazılanı görür.
 - Yalnız kendi değişikliğinin bıraktığı yetimi temizle; önceden var olan ölü kodu raporda öner.
 - Değişikliğin başka bir sahibin dosyasını kırıyorsa onu düzeltme; şefe engel olarak bildir.
 

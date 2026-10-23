@@ -175,6 +175,13 @@ export function projeCoz(kok = BASE, proje = null) {
     const k = cwdKlasoru(c, kok, mevcut);
     if (k) return { cwd: c, klasor: k, aday: encode(c) };
   }
+  // Alt klasörden (örn. apps/mobile) çalıştırıldıysa üst klasörlere çık; ev dizinine varınca dur.
+  for (const c of adaylar) {
+    for (let d = path.dirname(c); d !== path.dirname(d) && d !== HOME; d = path.dirname(d)) {
+      const k = cwdKlasoru(d, kok, mevcut);
+      if (k) return { cwd: d, klasor: k, aday: encode(d) };
+    }
+  }
   if (proje && !fs.existsSync(p)) throw new KullanimHatasi(`--proje yolu yok ve kökte karşılığı bulunamadı: ${p}`);
   const son = adaylar[adaylar.length - 1];
   return { cwd: son, klasor: null, aday: encode(son) };
