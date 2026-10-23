@@ -40,7 +40,7 @@ JSON
 - Ajanlar (şef dahil) bu dosyaya yazamaz; hook engeller.
 
 ## 3. İstersen: proje izin dosyası
-Koruma hook'u main'e push'u, `gh pr merge`'ü ve canlıya dokunan komutları engeller. Bir projede bunlardan bazılarını açmak için o projede `.claude/sef.local.json` yaz:
+Koruma hook'u main'e doğrudan push'u ve canlıya dokunan komutları engeller (`gh pr merge` serbesttir; birleştirmeden önce şef senin onayını ister). Bir projede bunlardan bazılarını açmak için o projede `.claude/sef.local.json` yaz:
 ```json
 { "izinli": ["git push origin main", "railway up --environment staging*"] }
 ```

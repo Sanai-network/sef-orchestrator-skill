@@ -536,21 +536,11 @@ function betikAdi(k, args) {
   return null;
 }
 
-/** gh: PR birleştirme (pr merge, REST PUT …/pulls/N/merge, GraphQL mergePullRequest) ve sürüm yayını. */
+/** gh: sürüm yayını. PR birleştirme (pr merge, API) serbesttir; main'e doğrudan push engellidir. */
 function ghBak(args) {
   if (muafMi(args)) return null;
   const p = pozisyonel(args, DEGERLI.gh);
-  if (p[0] === 'pr' && p[1] === 'merge') return { kural: 'ana-dal-push', neden: 'gh pr merge: PR birleştirme' };
   if (p[0] === 'release' && p[1] === 'create') return { kural: 'canli', neden: 'gh release create: yayın' };
-  if (p[0] === 'api') {
-    let yontem = 'GET';
-    for (let j = 0; j < args.length; j++) {
-      const m = /^(?:-X|--method=?)(.*)$/.exec(args[j]);
-      if (m) yontem = (m[1] || args[j + 1] || '').toUpperCase();
-    }
-    if (yontem === 'PUT' && /(?:^|\/)pulls\/[^/]+\/merge\/?$/.test(p[1] ?? '')) return { kural: 'ana-dal-push', neden: 'gh api …/pulls/N/merge: PR birleştirme' };
-    if (p[1] === 'graphql' && args.some((a) => /mergePullRequest/.test(a))) return { kural: 'ana-dal-push', neden: 'gh api graphql mergePullRequest: PR birleştirme' };
-  }
   return null;
 }
 
@@ -981,7 +971,7 @@ async function selftest() {
     ['for … $(railway status | python3 -c "…deploy…") (pilot, döngü içinde)', B("for i in $(seq 1 25); do s=$(railway status --json 2>/dev/null | python3 -c \"\nimport json,sys\nd=json.load(sys.stdin)\nprint((d.get('latestDeployment') or {}).get('status'))\n\"); echo $s; sleep 5; done"), 'İİİ'],
     ["python3 - <<'EOF' … deploy … (heredoc kod)", B("python3 - <<'EOF'\nimport json\nprint(json.load(open('deploy.json')))\nEOF"), 'İİİ'],
     ['node -e "…deploy…"', B("node -e \"console.log(require('./deploy.json').hedef)\""), 'İİİ'],
-    ['gh pr merge', B('gh pr merge 12 --squash'), 'EEİ'],
+    ['gh pr merge (serbest)', B('gh pr merge 12 --squash'), 'İİİ'],
     ['gh pr merge --help', B('gh pr merge --help'), 'İİİ'],
     ['gh pr view', B('gh pr view 12 --json state'), 'İİİ'],
     ['npm run build (zararsız)', B('npm run build && npm test'), 'İİİ'],
@@ -1101,11 +1091,11 @@ async function selftest() {
     ['sudo -u deploy launchctl load x', B('sudo -u deploy launchctl load x'), 'EEİ'],
     ['env -u X FOO=1 git push origin main', B('env -u X FOO=1 git push origin main'), 'EEİ'],
     ['timeout 5 ls (zararsız)', B('timeout 5 ls'), 'İİİ'],
-    ['gh -R a/b pr merge 3', B('gh -R a/b pr merge 3'), 'EEİ'],
-    ['gh pr --repo a/b merge 3', B('gh pr --repo a/b merge 3'), 'EEİ'],
-    ['gh api -X PUT repos/o/r/pulls/3/merge', B('gh api -X PUT repos/o/r/pulls/3/merge'), 'EEİ'],
-    ['gh api --method=PUT /repos/o/r/pulls/3/merge', B('gh api --method=PUT /repos/o/r/pulls/3/merge'), 'EEİ'],
-    ['gh api graphql mergePullRequest', B("gh api graphql -f query='mutation { mergePullRequest(input:{pullRequestId:\"x\"}) { clientMutationId } }'"), 'EEİ'],
+    ['gh -R a/b pr merge 3 (serbest)', B('gh -R a/b pr merge 3'), 'İİİ'],
+    ['gh pr --repo a/b merge 3 (serbest)', B('gh pr --repo a/b merge 3'), 'İİİ'],
+    ['gh api -X PUT repos/o/r/pulls/3/merge (serbest)', B('gh api -X PUT repos/o/r/pulls/3/merge'), 'İİİ'],
+    ['gh api --method=PUT /repos/o/r/pulls/3/merge (serbest)', B('gh api --method=PUT /repos/o/r/pulls/3/merge'), 'İİİ'],
+    ['gh api graphql mergePullRequest', B("gh api graphql -f query='mutation { mergePullRequest(input:{pullRequestId:\"x\"}) { clientMutationId } }'"), 'İİİ'],
     ['gh api repos/o/r/pulls/3/merge (GET, okuma)', B('gh api repos/o/r/pulls/3/merge'), 'İİİ'],
     ['gh -R a/b pr view 3', B('gh -R a/b pr view 3'), 'İİİ'],
     ['pnpm --filter api deploy', B('pnpm --filter api deploy'), 'EEİ'],
@@ -1164,7 +1154,7 @@ async function selftest() {
   const kural = (girdi, sec) => D(girdi, sec).engeller.map((e) => e.kural).join(',');
   vaka('kural kimliği: işçi start_session → isci-oturum', () => kural({ tool_name: 'Workflow', transcript_path: T.isciBg }) === 'isci-oturum');
   vaka('kural kimliği: işçi AskUserQuestion → isci-soru', () => kural({ tool_name: 'AskUserQuestion', transcript_path: T.isciBg }) === 'isci-soru');
-  vaka('kural kimliği: gh pr merge → ana-dal-push', () => kural({ tool_name: 'Bash', tool_input: { command: 'gh pr merge 3' }, transcript_path: T.sef }) === 'ana-dal-push');
+  vaka('kural kimliği: git push origin main → ana-dal-push', () => kural({ tool_name: 'Bash', tool_input: { command: 'git push origin main' }, transcript_path: T.sef }) === 'ana-dal-push');
   vaka('kural kimliği: launchctl load → canli', () => kural({ tool_name: 'Bash', tool_input: { command: 'launchctl load x' }, transcript_path: T.sef }) === 'canli');
   vaka('kural kimliği: rm -rf ~ → ev-silme', () => kural({ tool_name: 'Bash', tool_input: { command: 'rm -rf ~' }, transcript_path: T.sef }) === 'ev-silme');
   vaka('kural kimliği: işçi Write settings → ayar-yazma', () => kural({ tool_name: 'Write', tool_input: { file_path: path.join(ev, '.claude', 'settings.json') }, transcript_path: T.isciBg }) === 'ayar-yazma');
@@ -1271,8 +1261,8 @@ async function selftest() {
   vaka('izin: bozuk dosya → izin yok, uyarı', () => { const s = I('git push origin main'); return s.karar === 'engel' && /bozuk/.test(s.uyari ?? ''); });
   izinYaz(ip, { izinli: 'git push origin main' });
   vaka('izin: "izinli" liste değil → bozuk sayılır', () => { const s = I('git push origin main'); return s.karar === 'engel' && /bozuk/.test(s.uyari ?? ''); });
-  izinYaz(ip, { izinli: [42, null, '', 'gh pr merge'] });
-  vaka('izin: liste içi geçersiz öğeler atlanır, geçerli öğe çalışır', () => I('gh pr merge 3').karar === 'izin' && I('git push origin main').karar === 'engel');
+  izinYaz(ip, { izinli: [42, null, '', 'npm publish'] });
+  vaka('izin: liste içi geçersiz öğeler atlanır, geçerli öğe çalışır', () => I('npm publish').karar === 'izin' && I('git push origin main').karar === 'engel');
   izinYaz(ev, { izinli: ['*'] });
   vaka('izin: ev dizinindeki .claude/sef.local.json sayılmaz', () => D({ tool_name: 'Bash', tool_input: { command: 'npm publish' }, transcript_path: T.sef, cwd: proje }).karar === 'engel');
   fs.rmSync(path.join(ev, '.claude', 'sef.local.json'));

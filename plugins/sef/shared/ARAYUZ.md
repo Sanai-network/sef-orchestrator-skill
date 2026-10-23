@@ -75,7 +75,7 @@ Koruma ve oturum hook'u aynı kuralı uygular; ikisi de transkripti (`transcript
 |---|---|---|---|
 | `isci-oturum` | `mcp__ccd_session__start_session`, `mcp__ccd_session__hand_off_to_session`, `Workflow` | işçi | hayır |
 | `isci-soru` | `AskUserQuestion` | işçi | hayır |
-| `ana-dal-push` | `main` / `master`'a push, `gh pr merge` | şef + işçi | evet |
+| `ana-dal-push` | `main` / `master`'a doğrudan push (`gh pr merge` serbest; birleştirme onayı metin kuralı) | şef + işçi | evet |
 | `canli` | bilinen deploy ve yayın komutları, adı deploy olan paket betikleri, `launchctl` (okuma alt komutları hariç) | şef + işçi | evet |
 | `ev-silme` | ev dizinini ya da `~/.claude`'u silen `rm -r` | şef + işçi | hayır |
 | `ayar-yazma` | `~/.claude/settings*.json`, projedeki `.claude/settings*.json` ve herhangi bir `CLAUDE.md`'ye yazma | işçi | hayır |

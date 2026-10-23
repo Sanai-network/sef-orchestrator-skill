@@ -83,7 +83,7 @@ Anla → Sınıflandır → Hızlı yol mu? → Planla → Brif → Başlat → 
 - Bekçileri `TaskStop` ile durdur. Sapmaları proje dokümanına, kısa durumu ve dersleri hafızaya yaz. Açık süreçleri söyle; geçici çıktıları silmeyi öner.
 
 ## Koruma
-Eklentinin hook'u yalnız şef ve işçi oturumlarında çalışır. Engeller: işçinin oturum açması, `Workflow` ve `AskUserQuestion`; main / master'a push ve `gh pr merge`; deploy, yayın ve `launchctl`; ev dizinini ya da `~/.claude`'u silmek; işçinin ayar ve `CLAUDE.md` dosyalarına yazması; herkesin profile ve izin dosyasına yazması; profilde `"git": "commit-yok"` varsa işçinin commit'i. Proje izin dosyası (`<proje>/.claude/sef.local.json`) yalnız push ve canlı engellerini açar. Engel gelirse aşmaya çalışma: kullanıcıya sor ya da izin dosyasına önek eklemesini öner. Şefin başka dallara push'u serbesttir.
+Eklentinin hook'u yalnız şef ve işçi oturumlarında çalışır. Engeller: işçinin oturum açması, `Workflow` ve `AskUserQuestion`; main / master'a doğrudan push; deploy, yayın ve `launchctl`; ev dizinini ya da `~/.claude`'u silmek; işçinin ayar ve `CLAUDE.md` dosyalarına yazması; herkesin profile ve izin dosyasına yazması; profilde `"git": "commit-yok"` varsa işçinin commit'i. Proje izin dosyası (`<proje>/.claude/sef.local.json`) yalnız push ve canlı engellerini açar. Engel gelirse aşmaya çalışma: kullanıcıya sor ya da izin dosyasına önek eklemesini öner. Şefin başka dallara push'u ve `gh pr merge` hook'ta serbesttir; PR'ı main'e birleştirmek yine kullanıcının onayıyla olur (çekirdek madde 4).
 
 ## Sık yapılan hatalar
 - Olay turunda oturum açmaya çalışmak; bağımlı işçiyi baştan açmamak.

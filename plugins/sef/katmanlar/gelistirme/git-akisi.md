@@ -24,14 +24,14 @@ Yazıcı işçilerin nerede çalışacağı, nereye commit atacağı ve kapsamı
 **İşçi:**
 - Başlarken `git log -1 --oneline` çıktısını raporlar.
 - Kendi worktree'sinde, kendi dalına commit atar, push eder, PR açar; PR açıklamasına brif kimliğini yazar. **Push edip PR açan işçi en az Sonnet'tir.**
-- `main`'e birleştirmez, başka dala dokunmaz (main'e push ve `gh pr merge` hook'ta engelli).
+- `main`'e birleştirmez, başka dala dokunmaz (main'e doğrudan push hook'ta engelli; birleştirme şefin ve kullanıcının işi).
 
 **Bağımlı işçi:** önceden açılır; worktree'si öncülün commit'leri olmadan kesilmiştir. "BAŞLA" mesajının ilk adımı `git merge refs/heads/<öncülün dalı>`; çakışmada işçi durur ve bildirir.
 
 **Şef:**
 - PR diff'ini ve CI'yi kendisi doğrular (`gh pr diff`, `gh pr checks` ya da `ccd_pr` araçları); kapıları worktree yolunda kendisi çalıştırır.
 - Birleştirme sırası planda tanımlı olsun (örn. Temel → alanlar). Her birleştirmeden sonra kalan PR'lar yeni `main`'e göre güncellenir; çakışma iş sahibine geri gönderilir, şef çözmez.
-- `main`'e birleştirme **yalnız kullanıcının "evet"iyle**. Proje izin dosyası açmıyorsa hook engeller; engelde kullanıcıya sor.
+- `main`'e birleştirme **yalnız kullanıcının "evet"iyle**. Hook `gh pr merge`'ü engellemez; bu kural yalnız metindedir, birleştirmeden önce mutlaka sor.
 - Dallar raporlarda ve komutlarda tam ref ile anılır: `refs/heads/<dal>`.
 - Bitişte worktree ve `DerivedData` temizliğini kullanıcıya öner; kendin silme.
 
