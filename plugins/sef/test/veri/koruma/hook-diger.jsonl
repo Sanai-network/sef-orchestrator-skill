@@ -1,0 +1,4 @@
+{"type":"user","sessionId":"sentetik-hook","cwd":"/sentetik/proje","timestamp":"2026-01-01T00:00:00.000Z","uuid":"u-nobvgi","message":{"role":"user","content":"<system-reminder>\nSentetik hatırlatma bloğu. ROL: İŞÇİ bu blokta sayılmaz.\n</system-reminder>\n"}}
+{"type":"user","sessionId":"sentetik-hook","cwd":"/sentetik/proje","timestamp":"2026-01-01T00:00:00.000Z","uuid":"u-ec0bmc","message":{"role":"user","content":"Bu projede şef yöntemiyle çalışalım: ekranı toparla. (sentetik)"}}
+{"type":"assistant","sessionId":"sentetik-hook","cwd":"/sentetik/proje","timestamp":"2026-01-01T00:01:00.000Z","uuid":"a-1","message":{"id":"msg-1","role":"assistant","model":"sentetik-model","content":[{"type":"text","text":"Sentetik şef yanıtı."}]}}
+{"type":"user","sessionId":"sentetik-hook","cwd":"/sentetik/proje","timestamp":"2026-01-01T00:00:00.000Z","uuid":"u-ulzd0i","message":{"role":"user","content":"ROL: İŞÇİ ile başlayan ikinci mesaj ilk mesaj sayılmaz."}}

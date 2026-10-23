@@ -1,0 +1,2 @@
+{"type":"user","sessionId":"sentetik-hook","cwd":"/sentetik/proje","timestamp":"2026-01-01T00:00:00.000Z","uuid":"u-1gd26k","message":{"role":"user","content":"<system-reminder>\nSentetik hatırlatma bloğu. ROL: İŞÇİ bu blokta sayılmaz.\n</system-reminder>\nROL: İŞÇİ\nBRİF KİMLİĞİ: HOOK-TEST-0002"}}
+{"type":"assistant","sessionId":"sentetik-hook","cwd":"/sentetik/proje","timestamp":"2026-01-01T00:01:00.000Z","uuid":"a-1","message":{"id":"msg-1","role":"assistant","model":"sentetik-model","content":[{"type":"text","text":"Sentetik işçi yanıtı."}]}}

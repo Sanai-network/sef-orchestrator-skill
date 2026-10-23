@@ -1,0 +1,5 @@
+{bozuk satır
+
+{"type":"summary","summary":"sentetik"}
+{"type":"user","sessionId":"sentetik-hook","cwd":"/sentetik/proje","timestamp":"2026-01-01T00:00:00.000Z","uuid":"u-folt22","message":{"role":"user","content":"<system-reminder>\nSentetik hatırlatma bloğu. ROL: İŞÇİ bu blokta sayılmaz.\n</system-reminder>\n"}}
+{"type":"assistant","sessionId":"sentetik-hook","cwd":"/sentetik/proje","timestamp":"2026-01-01T00:01:00.000Z","uuid":"a-1","message":{"id":"msg-1","role":"assistant","model":"sentetik-model","content":[{"type":"text","text":"yalnız asistan"}]}}

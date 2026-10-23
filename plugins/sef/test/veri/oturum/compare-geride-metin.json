@@ -1,0 +1,7 @@
+{
+  "status": "ahead",
+  "ahead_by": 1,
+  "total_commits": 1,
+  "commits": [{ "sha": "4444444ddddddddddddddddddddddddddddddddd", "commit": { "message": "README: kurulum adımı" } }],
+  "files": [{ "filename": "README.md" }, { "filename": "plugins/sef/skills/orkestrator/SKILL.md" }]
+}

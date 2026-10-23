@@ -1,0 +1,12 @@
+{
+  "name": "sanai",
+  "owner": { "name": "Sanai-network" },
+  "description": "Sanai ekibinin Claude Code eklentileri.",
+  "plugins": [
+    {
+      "name": "sef",
+      "source": "./plugins/sef",
+      "description": "Şef yöntemi: geliştirme işini işçi oturumlarına böler, bağımsız doğrular, kısa Türkçe rapor verir."
+    }
+  ]
+}
