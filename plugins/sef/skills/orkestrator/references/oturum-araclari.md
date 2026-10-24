@@ -4,12 +4,14 @@ Bu notlar Claude Desktop "Code" sekmesindeki araçlara dayanır. Araç adları o
 
 ## 1. Oturum açma kuralları
 
-**Olay turunda oturum açılamaz.** Başka bir oturumun mesajıyla ya da otomatik bir olayla (işçiler bitince gelen bildirim) başlayan turda Desktop `start_session`'ı reddeder; o turda yalnız `own_initiative` öneri kartı açılır. Bu yüzden ağın bütün işçileri kullanıcının turunda baştan açılır (`orkestrasyon-agi.md` §3). Kaçınılmazsa kart aç ve kullanıcıya tek satır yaz: "Devam için karta tıkla."
+**Olay turunda oturum açılamaz.** Başka bir oturumun mesajıyla ya da otomatik bir olayla (işçiler bitince gelen bildirim) başlayan turda Desktop `start_session`'ı reddeder; o turda yalnız `own_initiative` öneri kartı açılır. Bu uygulama sınırıdır, CLAUDE.md izniyle aşılmaz. Bu yüzden ağın bütün işçileri kullanıcının turunda baştan açılır (`orkestrasyon-agi.md` §3). Sonradan çıkan iş önce bağlamı uygun **boştaki** bir işçiye `SendMessage` ile verilir. O da olmuyorsa kart aç ve kullanıcıya tek satır yaz: "Devam için karta tıkla ya da bir mesaj yaz; o turda açarım."
+
+**İzin varsa soru yok.** CLAUDE.md'de kalıcı izin varsa açma, yeniden görevlendirme, durdurma (`stop_session`) ve arşiv şefin kararıdır: "N oturum açayım mı?", "arşivleyeyim mi?" gibi sorular sorulmaz, plan onayı beklenmez (`wrap_up` dahil). Plan tek mesajla gösterilir ve işçiler aynı mesajda açılır.
 
 **`initiation`:**
 - `user_asked`: kullanıcının CLAUDE.md'sinde kendi cümlesiyle kalıcı izni var ya da bu turda ayrı / paralel işi sözle istedi. Eklenti bu izni kendisi yazmaz; profil izin vermez.
 - `offer`: izin yoksa. Yalnız `title` ile ve mesajdaki tek çağrı olarak. Kullanıcı "New session" derse aynı aracı `proposal_id` + `prompt` (+ diğer parametreler) ile yeniden çağır.
-- Toplu dalgada N tane `offer` açma: düz metinle bir kez "N oturum açayım mı? (liste)" diye sor; "evet" bu turdaki sözlü istektir.
+- Yalnız izin **yokken**: toplu dalgada N tane `offer` açma; düz metinle bir kez "N oturum açayım mı? (liste)" diye sor; "evet" bu turdaki sözlü istektir.
 
 **Toplu başlatma:** önce `mark_chapter`. Her `start_session` çağrısından hemen önce, aynı mesajda kalın başlık + tek cümle. Sonra bekçileri kur (§4), tek satır "nasıl raporlayacağım" yaz ve turu bitir; yoklama yok.
 
@@ -55,7 +57,7 @@ Zaman kutusu yalnız brif metninde kalırsa takılan işçiyi kimse fark etmez: 
 
 ## 7. Arşivleme (`archive_session`)
 - Arşiv oturumun sürecini durdurur ve **varsayılan olarak worktree'sini temizler**. Oturum Arşiv listesinden geri açılabilir (`unarchive_session`). Çalışan oturum arşivlenmez.
-- Ne zaman: profildeki `arsiv` ve CLAUDE.md'deki izin (`orkestrasyon-agi.md` §7). Uygulama yine de onay sorabilir.
+- Ne zaman: profildeki `arsiv` ve CLAUDE.md'deki izin (`orkestrasyon-agi.md` §7). İzin varsa sormadan arşivle; iptal edilen, gereksiz kalan ya da takılan işçi de sormadan kapatılır (`stop_session`, sonra arşiv). Uygulamanın kendi onay penceresi çıkarsa (bypass dışı izin kipinde) o kullanıcınındır.
 - Silme (`delete_session`) yalnız kullanıcı açıkça isterse.
 - `clear_session self` şef için kullanılmaz: oturumu boşaltır ve devam ettirecek kimse kalmaz.
 
