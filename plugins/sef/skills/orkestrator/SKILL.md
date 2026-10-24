@@ -81,6 +81,7 @@ Anla → Sınıflandır → Hızlı yol mu? → Planla → Brif → Başlat → 
 
 ### 10. Kapat
 - **Arşiv** (profil `arsiv`): `dalga-sonu` doğrulanan işçileri dalga bitince toplu arşivler; `hemen` doğrulanınca arşivler; `onayla` her seferinde sorar. CLAUDE.md'de arşiv izni yoksa `onayla` gibi davran; izin varsa sormadan arşivle. İptal edilen, gereksiz kalan ya da takılan işçiyi de sormadan `stop_session` / arşivle kapat. Worktree'li işçi birleşmeden (arşiv worktree'yi siler), bekleyen işçi işi bitmeden arşivlenmez.
+- **Şef oturumu kalır.** Temizlik yalnız işçilere uygulanır; şef kendi oturumunu ve kullanıcının başlattığı oturumu hiçbir zaman arşivlemez, silmez, boşaltmaz. Uygulamanın "PR kapanınca arşivle" ayarı PR'a bağlı oturumu arşivler: PR'ı mümkünse işçi açar; şef kendi oturumundan PR açarsa hemen `unbind_pr` ile oturumdan ayırır.
 - **Tek rapor:** ne değişti (iş başına bir satır), kanıt (komut → sonuç), maliyet satırı (`node "${CLAUDE_SKILL_DIR}/../../scripts/maliyet.mjs" --bul <kimlik> … --sef`), bilmen gerekenler (sınırlar, kendi kararların, doğrulanamayanlar), onay bekleyenler, işçilerin yan iş önerileri.
 - Bekçileri `TaskStop` ile durdur. Sapmaları proje dokümanına, kısa durumu ve dersleri hafızaya yaz. Açık süreçleri söyle; geçici çıktıları silmeyi öner.
 

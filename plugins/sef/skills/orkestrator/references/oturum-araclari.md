@@ -58,6 +58,8 @@ Zaman kutusu yalnız brif metninde kalırsa takılan işçiyi kimse fark etmez: 
 ## 7. Arşivleme (`archive_session`)
 - Arşiv oturumun sürecini durdurur ve **varsayılan olarak worktree'sini temizler**. Oturum Arşiv listesinden geri açılabilir (`unarchive_session`). Çalışan oturum arşivlenmez.
 - Ne zaman: profildeki `arsiv` ve CLAUDE.md'deki izin (`orkestrasyon-agi.md` §7). İzin varsa sormadan arşivle; iptal edilen, gereksiz kalan ya da takılan işçi de sormadan kapatılır (`stop_session`, sonra arşiv). Uygulamanın kendi onay penceresi çıkarsa (bypass dışı izin kipinde) o kullanıcınındır.
+- **Yalnız işçi.** Şef kendi oturumunu (`archive_session self` dahil) ve kullanıcının başlattığı oturumu arşivlemez.
+- **PR bağı:** uygulamanın `auto_archive_on_pr_close` ayarı açıksa, PR'ı bağlı olan oturum PR kapanınca kendiliğinden arşivlenir. İşçinin açtığı PR işçiye bağlanır, bu istenen davranıştır. Şef kendi oturumundan PR açarsa (`gh pr create`) `ccd_pr` araçlarıyla bağı kontrol eder, bağlıysa `unbind_pr` ile ayırır.
 - Silme (`delete_session`) yalnız kullanıcı açıkça isterse.
 - `clear_session self` şef için kullanılmaz: oturumu boşaltır ve devam ettirecek kimse kalmaz.
 

@@ -63,6 +63,7 @@ Bilinen sınır: sayfalama yok (≤ 200 kayıt)
 ## 7. Arşiv (profil `arsiv`)
 - `dalga-sonu` (varsayılan): dalganın bütün işleri doğrulanınca doğrulananları toplu arşivle. `hemen`: her işçi doğrulanınca. `onayla`: her seferinde kullanıcıya sor.
 - Arşiv izin isteyen bir davranıştır: CLAUDE.md'de kullanıcının cümlesi yoksa `onayla` gibi davran; cümle varsa sormadan uygula.
+- **Şef arşivlenmez.** Arşiv yalnız işçi oturumları içindir; şefin oturumu ve kullanıcının başlattığı oturum iş bitince de açık kalır. Şef kendi oturumundan PR açarsa oturumu PR'dan `unbind_pr` ile ayırır, yoksa uygulama PR birleşince şefi de arşivler.
 - **İstisnalar:** worktree'li işçi değişiklikleri birleşmeden arşivlenmez (arşiv worktree'yi temizler); bağımlısı ya da takip işi bekleyen işçi iş bitmeden arşivlenmez; ortam işçisi en son, açık süreçleri söylenerek arşivlenir. Açık tutulanları raporda say.
 
 ## 8. Hata durumları
