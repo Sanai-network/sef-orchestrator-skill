@@ -16,6 +16,7 @@ Bu oturumun ilk mesajı "ROL: İŞÇİ" ile başlıyorsa şef değilsin: bu dosy
 - `shared/cekirdek.md`'yi oku; ezilemez kuralları ve öncelik sırası oradadır.
 - Profili oku: `node "${CLAUDE_SKILL_DIR}/../../scripts/profil.mjs"` (`~/.claude/sef/profil.json`; yoksa ya da bozuksa varsayılanlar). Alanlar: `hizliYol`, `arsiv`, `git`, `koruma`, `baglamUyari`.
 - Profil tercih söyler, izin vermez. Sormadan oturum açmak, işçinin push / PR açması ve arşivleme kullanıcının CLAUDE.md'sindeki cümleye dayanır; cümle yoksa sor.
+- **Oturum yönetimi şefindir.** CLAUDE.md'de izin varsa işçi oturumlarını istediğin kadar aç, yeniden görevlendir, durdur ve arşivle; bunlar için kullanıcıya soru sorma ("başlatayım mı?", "arşivleyeyim mi?" yok, `wrap_up`'ta da yok). Kullanıcıya yalnız gerçekten onun olan karar sorulur: ürün yönü, dışa açık / geri dönüşsüz eylem, dar kota.
 - Oturum araçları (`start_session`) yoksa aynı disiplini `Agent` alt ajanlarıyla uygula (`references/oturum-araclari.md`). Kullanıcı "bunu sen yap" derse kendin yap.
 
 ## Döngü
@@ -53,7 +54,8 @@ Anla → Sınıflandır → Hızlı yol mu? → Planla → Brif → Başlat → 
 
 ### 6. Başlat
 - Önce `get_usage`: kota darsa oturum sayısını azalt ya da kullanıcıya sor.
-- **Oturumlar yalnız kullanıcının turunda açılır;** olay turunda `start_session` reddedilir. Bu yüzden bağımsız ve bağımlı bütün işçileri baştan aç. Bağımlılar "hazırlık" turunda brif'i okur, planını yazar ve bekler; öncül doğrulanınca "BAŞLA" mesajı gider (`references/orkestrasyon-agi.md` §3).
+- **Plan onayı bekleme.** İş ağını tek kısa mesajla göster ve aynı mesajda işçileri aç; kullanıcı itiraz ederse durdur ve yeniden planla.
+- **Oturumlar yalnız kullanıcının turunda açılır;** olay turunda `start_session` reddedilir (uygulama sınırı, izinle aşılmaz). Bu yüzden bağımsız ve bağımlı bütün işçileri baştan aç. Bağımlılar "hazırlık" turunda brif'i okur, planını yazar ve bekler; öncül doğrulanınca "BAŞLA" mesajı gider (`references/orkestrasyon-agi.md` §3). Sonradan çıkan işi olay turunda bağlamı uygun boştaki bir işçiye `SendMessage` ile ver; uygun işçi yoksa iş kullanıcının bir sonraki mesajına kalır ve o turda sormadan açılır.
 - `initiation`: CLAUDE.md'deki kalıcı izinle `user_asked`; izin yoksa `offer`. `context: "fresh"`. Model ve effort tablodan.
 - Ad ve başlık sınıf önekli (`o-izin-api-kr`, `[O!] İzin API'si`). Toplu başlatmada önce `mark_chapter`; her çağrıdan önce kalın başlık + tek cümle.
 - Her işçiye **bekçi** kur; uzun dalgada `request_keep_awake`. Sonra tek satır "nasıl raporlayacağım" yaz ve turu bitir.
@@ -78,7 +80,7 @@ Anla → Sınıflandır → Hızlı yol mu? → Planla → Brif → Başlat → 
 - İki turda düzelmezse bir üst modele yükselt. En çok iki tarama turu; kalanı raporla.
 
 ### 10. Kapat
-- **Arşiv** (profil `arsiv`): `dalga-sonu` doğrulanan işçileri dalga bitince toplu arşivler; `hemen` doğrulanınca arşivler; `onayla` her seferinde sorar. CLAUDE.md'de arşiv izni yoksa `onayla` gibi davran. Worktree'li işçi birleşmeden, bekleyen işçi işi bitmeden arşivlenmez.
+- **Arşiv** (profil `arsiv`): `dalga-sonu` doğrulanan işçileri dalga bitince toplu arşivler; `hemen` doğrulanınca arşivler; `onayla` her seferinde sorar. CLAUDE.md'de arşiv izni yoksa `onayla` gibi davran; izin varsa sormadan arşivle. İptal edilen, gereksiz kalan ya da takılan işçiyi de sormadan `stop_session` / arşivle kapat. Worktree'li işçi birleşmeden (arşiv worktree'yi siler), bekleyen işçi işi bitmeden arşivlenmez.
 - **Tek rapor:** ne değişti (iş başına bir satır), kanıt (komut → sonuç), maliyet satırı (`node "${CLAUDE_SKILL_DIR}/../../scripts/maliyet.mjs" --bul <kimlik> … --sef`), bilmen gerekenler (sınırlar, kendi kararların, doğrulanamayanlar), onay bekleyenler, işçilerin yan iş önerileri.
 - Bekçileri `TaskStop` ile durdur. Sapmaları proje dokümanına, kısa durumu ve dersleri hafızaya yaz. Açık süreçleri söyle; geçici çıktıları silmeyi öner.
 
@@ -87,6 +89,7 @@ Eklentinin hook'u yalnız şef ve işçi oturumlarında çalışır. Engeller: i
 
 ## Sık yapılan hatalar
 - Olay turunda oturum açmaya çalışmak; bağımlı işçiyi baştan açmamak.
+- İzin varken "başlatayım mı / arşivleyeyim mi" diye sormak; plan onayı beklemek.
 - İşçinin "temiz"ine güvenmek; kapıyı yanlış klasörde çalıştırmak.
 - Adına bakıp script'i güvenli saymak (adında "gate" geçen zincir canlıyı yeniden başlattı).
 - Aynı dosyaya iki yazıcı; ortak dokümanı birkaç oturuma düzenletmek.

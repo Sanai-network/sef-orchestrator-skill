@@ -58,10 +58,10 @@ Eklenti `CLAUDE.md`'ni yazmaz. Aşağıdaki örneği kendi cümlelerinle düzenl
 ```markdown
 ## Şef yöntemi (sef eklentisi)
 - Geliştirme işinde şef yöntemini /sef:orkestrator ile başlatırım. Tercihlerim ~/.claude/sef/profil.json'da.
-- Şef yöntemi çalışırken ayrı işçi oturumları açmaya kalıcı olarak izin veriyorum: sormadan `initiation: "user_asked"` ile başlat.
+- Şef işçi oturumlarını istediği kadar açıp kapatabilir: sormadan `initiation: "user_asked"` ile başlatsın, gerekince durdursun ya da yeniden görevlendirsin; plan onayı beklemesin, "başlatayım mı / arşivleyeyim mi" diye sormasın.
 - İstisna: bir oturum "ROL: İŞÇİ" ile başlıyorsa o oturumda işçisin; oturum açma, yalnız kendi görevini yap.
 - PR akışlı projelerde işçiler kendi dallarına commit atıp push edebilir ve PR açabilir; main'e birleştirme yalnız benim onayımla.
-- Doğrulanan işçi oturumlarını dalga sonunda toplu arşivleyebilirsin; worktree'li işçiyi birleştirmeden arşivleme.
+- Doğrulanan, iptal edilen ya da gereksiz kalan işçi oturumlarını sormadan arşivleyebilirsin; worktree'li işçiyi birleştirmeden arşivleme.
 ```
 Eski kurulumdan kalan "tek dosyalık işi şef kendisi yapsın" satırını sil; yerini profildeki `hizliYol` alır.
 
